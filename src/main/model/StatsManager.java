@@ -3,11 +3,16 @@ package main.model;
 import gamesplugin.Stat;
 import java.io.*;
 import java.util.*;
+import java.util.logging.Logger;
+import java.util.logging.Level;
+
 
 public class StatsManager {
     private static StatsManager instance;
     private Map<String, List<Stat>> allStats;
     private static final String STATS_FILE = "stats.json";
+    private static final Logger LOGGER = Logger.getLogger(StatsManager.class.getName());
+
 
     private StatsManager() {
         allStats = new HashMap<>();
@@ -38,22 +43,30 @@ public class StatsManager {
 
     public void saveStats() {
         try (PrintWriter writer = new PrintWriter(new FileWriter(STATS_FILE))) {
+            writer.println("{");
+            int juegoCount = 0;
             for (Map.Entry<String, List<Stat>> entry : allStats.entrySet()) {
                 String juego = entry.getKey();
-                for (Stat stat : entry.getValue()) {
-                    String json = String.format(
-                            "{\"juego\":\"%s\",\"nombre\":\"%s\",\"valor\":%d}",
-                            juego,
+                List<Stat> statsList = entry.getValue();
+                writer.printf("  \"%s\": [\n", juego);
+                for (int i = 0; i < statsList.size(); i++) {
+                    Stat stat = statsList.get(i);
+                    writer.printf(
+                            "    {\"nombre\": \"%s\", \"valor\": %d}%s\n",
                             stat.getNombre().replace("\"", "\\\""),
-                            stat.getValor()
+                            stat.getValor(),
+                            (i < statsList.size() - 1 ? "," : "")
                     );
-                    writer.println(json);
                 }
+                writer.print("  ]");
+                writer.print(++juegoCount < allStats.size() ? ",\n" : "\n");
             }
+            writer.println("}");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
 
     public void loadStats() {
         File file = new File(STATS_FILE);
@@ -71,9 +84,9 @@ public class StatsManager {
                 for (String p : parts) {
                     String[] kv = p.split(":");
                     if (kv.length == 2) {
-                        if (kv[0].trim().equals("juego")) juego = kv[1];
-                        else if (kv[0].trim().equals("nombre")) nombre = kv[1];
-                        else if (kv[0].trim().equals("valor")) valor = Integer.parseInt(kv[1]);
+                        if (kv[0].trim().equals("juego")) juego = kv[1].trim();
+                        else if (kv[0].trim().equals("nombre")) nombre = kv[1].trim();
+                        else if (kv[0].trim().equals("valor")) valor = Integer.parseInt(kv[1].trim());
                     }
                 }
                 if (juego != null && nombre != null) {
@@ -86,4 +99,5 @@ public class StatsManager {
             e.printStackTrace();
         }
     }
+
 }

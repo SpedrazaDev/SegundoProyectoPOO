@@ -210,8 +210,13 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
             direction = 'R';
             running = true;
             paused = false;
-            for (int i = 0; i < x.length; i++) x[i] = 0;
-            for (int i = 0; i < y.length; i++) y[i] = 0;
+            int startX = SCREEN_WIDTH / 2; // O ajusta a una zona más central
+            int startY = SCREEN_HEIGHT / 2;
+            for (int i = 0; i < bodyParts; i++) {
+                x[i] = startX - i * UNIT_SIZE;
+                y[i] = startY;
+            }
+            for (int i = bodyParts; i < x.length; i++) { x[i] = -UNIT_SIZE; y[i] = -UNIT_SIZE; } // segmentos "muertos"
             newApple();
             timer.restart();
             repaint();

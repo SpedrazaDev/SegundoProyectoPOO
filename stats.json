@@ -1,3 +1,5 @@
-{"juego":"Snake","nombre":"afe","valor":20}
-{"juego":"Snake","nombre":"dasdsad","valor":10}
-{"juego":"Snake","nombre":"Santiago","valor":8}
+{
+  "Snake": [
+    {"nombre": "Santiago", "valor": 14}
+  ]
+}
