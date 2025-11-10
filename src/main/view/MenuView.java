@@ -27,8 +27,8 @@ public class MenuView extends JInternalFrame {
         JLabel titleLabel = new JLabel("Plataforma de Juegos", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
 
-        JButton btnGame1 = new JButton("Juego de Memoria");
-        JButton btnGame2 = new JButton("Tres en Línea");
+        JButton btnGame1 = new JButton("Juego 1... falta por hacer");
+        JButton btnGame2 = new JButton("Juego 2... falta por hacer");
         JButton btnGame3 = new JButton("Snake");
         JButton btnStats = new JButton("Ver Estadísticas");
 
