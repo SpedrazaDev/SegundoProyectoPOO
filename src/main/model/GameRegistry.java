@@ -4,16 +4,23 @@ import games.memory.MemoryGame;
 import games.simon.SimonGame;
 import games.snake.SnakeGame;
 import gamesplugin.GameFunction;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.function.Supplier;
 
 public class GameRegistry implements Iterable<GameFunction> {
     private static GameRegistry instance;
-    private Map<String, GameFunction> games;
+    private final Map<String, GameEntry> games;
+    private final List<GameInfo> cachedInfos;
 
     private GameRegistry() {
         games = new HashMap<>();
+        cachedInfos = new ArrayList<>();
+        registerBuiltInGames();
     }
 
     public static GameRegistry getInstance() {
@@ -33,24 +40,31 @@ public class GameRegistry implements Iterable<GameFunction> {
         registerInstanceInternal(id, displayName, instance, true);
     }
 
-    public synchronized void registerGame(String id, String displayName, Class<? extends GameFunction> clazz) {
-        registerGame(id, displayName, clazz, false);
+    private void registerInstanceInternal(String id, String displayName, GameFunction instance, boolean external) {
+        String normalizedId = normalize(id);
+        ensureNotRegistered(normalizedId);
+        games.put(normalizedId, new GameEntry(normalizedId, displayName, () -> instance, external));
+        cachedInfos.clear();
+    }
+
+    private void registerFactoryInternal(String id, String displayName, Supplier<GameFunction> supplier, boolean external) {
+        String normalizedId = normalize(id);
+        ensureNotRegistered(normalizedId);
+        games.put(normalizedId, new GameEntry(normalizedId, displayName, supplier, external));
+        cachedInfos.clear();
     }
 
     public synchronized void registerGame(String id, String displayName, Class<? extends GameFunction> clazz, boolean external) {
         registerFactoryInternal(id, displayName, () -> clazz.getDeclaredConstructor().newInstance(), external);
     }
 
-    private void registerInstanceInternal(String id, String displayName, GameFunction instance, boolean external) {
-        String normalizedId = normalize(id);
-        ensureNotRegistered(normalizedId);
-        games.put(normalizedId, new GameEntry(normalizedId, displayName, null, instance, external));
-    }
-
-    private void registerFactoryInternal(String id, String displayName, GameFactory factory, boolean external) {
-        String normalizedId = normalize(id);
-        ensureNotRegistered(normalizedId);
-        games.put(normalizedId, new GameEntry(normalizedId, displayName, factory, null, external));
+    public synchronized List<GameInfo> getAvailableGames() {
+        if (cachedInfos.isEmpty()) {
+            for (GameEntry entry : games.values()) {
+                cachedInfos.add(new GameInfo(entry.id, entry.displayName, entry.external));
+            }
+        }
+        return Collections.unmodifiableList(cachedInfos);
     }
 
     public synchronized GameFunction getGame(String id) throws Exception {
@@ -58,30 +72,50 @@ public class GameRegistry implements Iterable<GameFunction> {
         if (entry == null) {
             throw new IllegalArgumentException("Juego no registrado: " + id);
         }
-
-        String className = "games." + gameName + "." +
-                capitalize(gameName) + "Game";
-
         try {
-            Class<?> gameClass = Class.forName(className);
-            GameFunction game = (GameFunction) gameClass
-                    .getDeclaredConstructor()
-                    .newInstance();
-
-            games.put(gameName, game);
-            return game;
+            return entry.supplier.get();
         } catch (Exception e) {
-            throw new Exception("No se pudo cargar el juego: " + gameName);
+            throw new Exception("No se pudo cargar el juego: " + id, e);
         }
     }
 
-    private String capitalize(String str) {
+    private String normalize(String id) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("El identificador no puede estar vacío");
+        }
+        return id.trim().toLowerCase();
+    }
+
+    private void ensureNotRegistered(String id) {
+        if (games.containsKey(id)) {
+            throw new IllegalArgumentException("Juego ya registrado: " + id);
+        }
+    }
+
+    private static String capitalize(String str) {
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
-    // Aquí está el método para el Iterator:
     @Override
     public Iterator<GameFunction> iterator() {
-        return games.values().iterator();
+        List<GameFunction> instances = new ArrayList<>();
+        for (GameEntry entry : games.values()) {
+            try {
+                instances.add(entry.supplier.get());
+            } catch (Exception e) {
+                // Ignoramos juegos que no pudieron instanciarse
+            }
+        }
+        return instances.iterator();
+    }
+
+    private record GameEntry(String id, String displayName,
+                             Supplier<GameFunction> supplier, boolean external) {}
+
+    public record GameInfo(String id, String displayName, boolean external) {}
+
+    @FunctionalInterface
+    private interface GameFactory {
+        GameFunction newInstance() throws Exception;
     }
 }

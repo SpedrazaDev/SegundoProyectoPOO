@@ -7,7 +7,6 @@ import main.view.MainView;
 import main.view.StatsView;
 
 import javax.swing.*;
-import java.beans.PropertyVetoException;
 import java.util.List;
 
 public class GameController {
@@ -24,7 +23,7 @@ public class GameController {
     public void loadGame(String gameName) {
         try {
             GameFunction game = gameRegistry.getGame(gameName);
-            game.setGameListener(this);
+            game.setGameListener(new ControllerListener(gameName));
 
             // Crear internal frame para el juego
             JInternalFrame gameFrame = (JInternalFrame) game;
@@ -39,40 +38,18 @@ public class GameController {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
-    public void listarJuegosCargados() {
-        GameRegistry registry = GameRegistry.getInstance();
-        for (GameFunction game : registry) {
-            System.out.println(game.getClass().getSimpleName());
-        }
-    }
-
-
-    @Override
-    public void onGameFinished(Stat stats) {
-        // Observer pattern: el juego notifica cuando termina
-        statsManager.addStat(stats);
-        statsManager.saveStats();
-
-        JOptionPane.showMessageDialog(mainView,
-                "Juego terminado!\n" +
-                        stats.getClave() + ": " + stats.getValor(),
-                "Resultado",
-                JOptionPane.INFORMATION_MESSAGE);
-    }
 
     public void showStats() {
         StatsView statsView = new StatsView(statsManager);
         mainView.addInternalFrame(statsView);
     }
 
-    public void listarJuegosCargados() {
-        for (GameFunction game : gameRegistry) {
-            System.out.println(game.getClass().getSimpleName());
-        }
+    public List<GameRegistry.GameInfo> getAvailableGames() {
+        return gameRegistry.getAvailableGames();
     }
 
     private void handleGameFinished(String gameId, Stat stats) {
-        statsManager.addStat(gameId, stats);
+        statsManager.addStat(stats);
         statsManager.saveStats();
         JOptionPane.showMessageDialog(
                 mainView,
