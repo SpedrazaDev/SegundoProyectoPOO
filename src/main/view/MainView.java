@@ -18,7 +18,7 @@ public class MainView extends JFrame {
         desktopPane.setBackground(new Color(45, 52, 54));
         add(desktopPane);
 
-        // Mostrar menú principal
+        // Mostrar menu principal
         showMenu();
     }
 

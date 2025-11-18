@@ -1,7 +1,7 @@
-package main.view;
+﻿package main.view;
 
-import main.model.StatsManager;
 import gamesplugin.Stat;
+import main.model.StatsManager;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -10,36 +10,42 @@ import java.util.List;
 import java.util.Map;
 
 public class StatsView extends JInternalFrame {
-    private StatsManager statsManager;
+    private final StatsManager statsManager;
 
     public StatsView(StatsManager statsManager) {
-        super("Estadísticas", true, true, true, true);
+        super("Estadisticas", true, true, true, true);
         this.statsManager = statsManager;
-        setSize(500, 300);
+        setSize(520, 320);
         setLocation(150, 100);
         setLayout(new BorderLayout());
 
-        // Crear el modelo de tabla
-        DefaultTableModel model = new DefaultTableModel();
-        model.addColumn("Juego");
-        model.addColumn("Nombre");
-        model.addColumn("Valor");
+        DefaultTableModel model = new DefaultTableModel(new Object[]{"Juego", "Rubro", "Nombre", "Valor"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
 
-        // Obtener las estadísticas
+        fillModel(model);
+
+        JTable table = new JTable(model);
+        table.setFillsViewportHeight(true);
+        JScrollPane scroll = new JScrollPane(table);
+        add(scroll, BorderLayout.CENTER);
+    }
+
+    private void fillModel(DefaultTableModel model) {
         Map<String, List<Stat>> stats = statsManager.getAllStats();
-        for (String juego : stats.keySet()) {
-            List<Stat> lista = stats.get(juego);
-            for (Stat stat : lista) {
-                model.addRow(new Object[] {
+        for (Map.Entry<String, List<Stat>> entry : stats.entrySet()) {
+            String gameName = entry.getKey();
+            for (Stat stat : entry.getValue()) {
+                model.addRow(new Object[]{
+                        gameName,
                         stat.getClave(),
                         stat.getNombre(),
                         stat.getValor()
                 });
             }
         }
-
-        JTable tabla = new JTable(model);
-        JScrollPane scroll = new JScrollPane(tabla);
-        add(scroll, BorderLayout.CENTER);
     }
 }

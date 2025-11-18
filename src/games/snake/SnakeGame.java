@@ -38,7 +38,7 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
 
     @Override
     public Stat getStats() {
-        return new Stat("Snake", playerName, score);
+        return new Stat("Puntaje", playerName, score);
     }
 
     private class GamePanel extends JPanel implements ActionListener, KeyListener {
@@ -62,7 +62,7 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
 
         public GamePanel() {
             setPreferredSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
-            setLayout(null); // posición absoluta para el botón
+            setLayout(null); // posicion absoluta para el boton
             setBackground(Color.black);
             setFocusable(true);
             addKeyListener(this);
@@ -83,7 +83,7 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
 
         private void mostrarControles() {
             JOptionPane.showMessageDialog(this,
-                    "CONTROL SNAKE:\n- Flechas: mover\n- Barra espaciadora: pausar/continuar\n- Aparecen al azar manzanas (rojas).\n¡No choques contigo o los bordes!",
+                    "CONTROL SNAKE:\n- Flechas: mover\n- Barra espaciadora: pausar/continuar\n- Aparecen al azar manzanas (rojas).\n!No choques contigo o los bordes!",
                     "Controles", JOptionPane.INFORMATION_MESSAGE);
         }
 
@@ -210,7 +210,7 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
             direction = 'R';
             running = true;
             paused = false;
-            int startX = SCREEN_WIDTH / 2; // O ajusta a una zona más central
+            int startX = SCREEN_WIDTH / 2; // O ajusta a una zona mas central
             int startY = SCREEN_HEIGHT / 2;
             for (int i = 0; i < bodyParts; i++) {
                 x[i] = startX - i * UNIT_SIZE;

@@ -1,5 +1,7 @@
 {
-  "Snake": [
-    {"nombre": "Santiago", "valor": 14}
+  "snake": [
+    {"clave": "Puntaje", "nombre": "Jaosn", "valor": 12},
+    {"clave": "Snake", "nombre": "ason", "valor": 7},
+    {"clave": "Puntaje", "nombre": "Jaosn", "valor": 1}
   ]
 }
