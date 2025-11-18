@@ -3,6 +3,7 @@ package main.view;
 import main.controller.GameController;
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public class MenuView extends JInternalFrame {
     private MainView mainView;
@@ -27,10 +28,16 @@ public class MenuView extends JInternalFrame {
         JLabel titleLabel = new JLabel("Plataforma de Juegos", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
 
-        JButton btnGame1 = new JButton("Juego 1... falta por hacer");
-        JButton btnGame2 = new JButton("Juego 2... falta por hacer");
-        JButton btnGame3 = new JButton("Snake");
-        JButton btnStats = new JButton("Ver Estadísticas");
+        gamesPanel = new JPanel();
+        gamesPanel.setLayout(new BoxLayout(gamesPanel, BoxLayout.Y_AXIS));
+        gamesPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JScrollPane scrollPane = new JScrollPane(gamesPanel);
+        add(scrollPane, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        JButton btnStats = new JButton("Ver Estadisticas");
+        buttonPanel.add(btnStats);
+        add(buttonPanel, BorderLayout.SOUTH);
 
         // Listeners
         btnGame1.addActionListener(e -> controller.loadGame("memorygame"));
@@ -43,7 +50,29 @@ public class MenuView extends JInternalFrame {
         centerPanel.add(btnGame3);
         centerPanel.add(btnStats);
 
-        add(titleLabel, BorderLayout.NORTH);
-        add(centerPanel, BorderLayout.CENTER);
+    public void refreshGames() {
+        gamesPanel.removeAll();
+        List<GameInfo> games = controller.getAvailableGames();
+        if (games.isEmpty()) {
+            JLabel noGames = new JLabel("No hay juegos registrados.", SwingConstants.CENTER);
+            noGames.setForeground(Color.GRAY);
+            noGames.setAlignmentX(Component.CENTER_ALIGNMENT);
+            gamesPanel.add(noGames);
+        } else {
+            for (GameInfo info : games) {
+                JButton button = new JButton(buildButtonLabel(info));
+                button.setAlignmentX(Component.CENTER_ALIGNMENT);
+                button.addActionListener(e -> controller.loadGame(info.getId()));
+                button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+                gamesPanel.add(button);
+                gamesPanel.add(Box.createVerticalStrut(8));
+            }
+        }
+        gamesPanel.revalidate();
+        gamesPanel.repaint();
+    }
+
+    private String buildButtonLabel(GameInfo info) {
+        return info.getDisplayName();
     }
 }

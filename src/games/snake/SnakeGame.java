@@ -6,11 +6,13 @@ import gamesplugin.Stat;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class SnakeGame extends JInternalFrame implements GameFunction {
     private GameListener listener;
     private int score;
-    private String playerName;
+    private String playerName = "Jugador";
     private GamePanel panel;
 
     public SnakeGame() {
@@ -22,11 +24,14 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
 
     @Override
     public void iniciar() {
-        playerName = JOptionPane.showInputDialog(this, "Nombre jugador: ");
-        if (playerName == null || playerName.trim().isEmpty()) playerName = "Jugador";
+        String respuesta = JOptionPane.showInputDialog(this, "Nombre del jugador:", playerName);
+        if (respuesta != null && !respuesta.trim().isEmpty()) {
+            playerName = respuesta.trim();
+        }
         score = 0;
         panel = new GamePanel();
         setContentPane(panel);
+        pack();
         setVisible(true);
         panel.requestFocusInWindow();
     }
@@ -43,13 +48,16 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
 
     private class GamePanel extends JPanel implements ActionListener, KeyListener {
         private final int UNIT_SIZE = 20;
-        private final int GAME_UNITS = (400 / UNIT_SIZE) * (400 / UNIT_SIZE);
+        private final int BOARD_SIZE = 360;
+        private final int PADDING = 20;
         private final int DELAY = 120;
-        private final int SCREEN_WIDTH = 400;
-        private final int SCREEN_HEIGHT = 400;
+        private final int SCREEN_WIDTH = BOARD_SIZE + PADDING * 2;
+        private final int SCREEN_HEIGHT = BOARD_SIZE + PADDING * 2 + 60;
+        private final int GAME_UNITS = ((BOARD_SIZE / UNIT_SIZE) * (BOARD_SIZE / UNIT_SIZE));
 
         private final int[] x = new int[GAME_UNITS];
         private final int[] y = new int[GAME_UNITS];
+        private final java.util.Random random = new java.util.Random();
         private int bodyParts = 6;
         private int applesEaten;
         private int appleX;
@@ -70,7 +78,7 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
             startGame();
 
             btnReiniciar = new JButton("Reiniciar");
-            btnReiniciar.setBounds((SCREEN_WIDTH-120)/2, SCREEN_HEIGHT/2+40, 120, 30);
+            btnReiniciar.setBounds((SCREEN_WIDTH - 120) / 2, SCREEN_HEIGHT - 45, 120, 30);
             btnReiniciar.setVisible(false);
             btnReiniciar.setFocusable(false);
             btnReiniciar.addActionListener(e -> {
@@ -88,18 +96,37 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
         }
 
         public void startGame() {
-            newApple();
-            running = true;
-            paused = false;
+            resetState();
             timer = new javax.swing.Timer(DELAY, this);
             timer.start();
+        }
+
+        private void resetState() {
+            bodyParts = 6;
+            applesEaten = 0;
+            direction = 'R';
+            running = true;
+            paused = false;
+            int cols = BOARD_SIZE / UNIT_SIZE;
+            int rows = BOARD_SIZE / UNIT_SIZE;
+            int startX = PADDING + (cols / 2) * UNIT_SIZE;
+            int startY = PADDING + (rows / 2) * UNIT_SIZE;
+            for (int i = 0; i < bodyParts; i++) {
+                x[i] = startX - i * UNIT_SIZE;
+                y[i] = startY;
+            }
+            for (int i = bodyParts; i < x.length; i++) {
+                x[i] = -UNIT_SIZE;
+                y[i] = -UNIT_SIZE;
+            }
+            newApple();
         }
 
         @Override
         public void paintComponent(Graphics g) {
             super.paintComponent(g);
             g.setColor(Color.DARK_GRAY);
-            g.drawRect(0, 0, SCREEN_WIDTH-1, SCREEN_HEIGHT-1); // Borde visible
+            g.drawRect(PADDING, PADDING, BOARD_SIZE, BOARD_SIZE); // Borde visible
             draw(g);
         }
 
@@ -107,22 +134,23 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
             if (running) {
                 g.setColor(Color.red);
                 g.fillOval(appleX, appleY, UNIT_SIZE, UNIT_SIZE);
-                for (int i = 0; i < bodyParts; i++) {
-                    if (i == 0) {
+                boolean headDrawn = false;
+                for (Point segment : snakeSegments()) {
+                    if (!headDrawn) {
                         g.setColor(Color.green);
-                        g.fillRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE);
+                        headDrawn = true;
                     } else {
                         g.setColor(new Color(45, 180, 0));
-                        g.fillRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE);
                     }
+                    g.fillRect(segment.x, segment.y, UNIT_SIZE, UNIT_SIZE);
                 }
                 // Puntaje centrado arriba
                 String puntajeTxt = "Puntaje: " + applesEaten;
                 g.setColor(Color.white);
                 g.setFont(new Font("Arial", Font.BOLD, 20));
                 FontMetrics fm = g.getFontMetrics();
-                int xTxt = (SCREEN_WIDTH - fm.stringWidth(puntajeTxt)) / 2;
-                g.drawString(puntajeTxt, xTxt, 18);
+                int xTxt = PADDING + (BOARD_SIZE - fm.stringWidth(puntajeTxt)) / 2;
+                g.drawString(puntajeTxt, xTxt, PADDING - 5);
 
                 if(paused) {
                     g.setFont(new Font("Arial", Font.BOLD, 32));
@@ -138,13 +166,15 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
 
         public void newApple() {
             java.util.List<Point> libres = new java.util.ArrayList<>();
-            for (int i = 0; i < SCREEN_WIDTH / UNIT_SIZE; i++) {
-                for (int j = 0; j < SCREEN_HEIGHT / UNIT_SIZE; j++) {
+            int cols = BOARD_SIZE / UNIT_SIZE;
+            int rows = BOARD_SIZE / UNIT_SIZE;
+            for (int i = 0; i < cols; i++) {
+                for (int j = 0; j < rows; j++) {
                     boolean ocupado = false;
-                    int px = i * UNIT_SIZE;
-                    int py = j * UNIT_SIZE;
-                    for (int k = 0; k < bodyParts; k++) {
-                        if (x[k] == px && y[k] == py) {
+                    int px = PADDING + i * UNIT_SIZE;
+                    int py = PADDING + j * UNIT_SIZE;
+                    for (Point segment : snakeSegments()) {
+                        if (segment.x == px && segment.y == py) {
                             ocupado = true;
                             break;
                         }
@@ -155,10 +185,14 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
                 }
             }
             if (!libres.isEmpty()) {
-                Point p = libres.get((int) (Math.random() * libres.size()));
+                Point p = libres.get(random.nextInt(libres.size()));
                 appleX = p.x;
                 appleY = p.y;
+            } else {
+                appleX = SCREEN_WIDTH / 2;
+                appleY = SCREEN_HEIGHT / 2;
             }
+            repaint();
         }
 
 
@@ -184,12 +218,18 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
         }
 
         public void checkCollisions() {
-            for (int i = bodyParts; i > 0; i--) {
-                if ((x[0] == x[i]) && (y[0] == y[i])) {
-                    running = false;
+            Iterator<Point> iterator = snakeSegments().iterator();
+            if (iterator.hasNext()) {
+                Point head = iterator.next();
+                while (iterator.hasNext()) {
+                    Point segment = iterator.next();
+                    if (head.equals(segment)) {
+                        running = false;
+                        break;
+                    }
                 }
             }
-            if (x[0] < 0 || x[0] > SCREEN_WIDTH - UNIT_SIZE || y[0] < 0 || y[0] > SCREEN_HEIGHT - UNIT_SIZE) {
+            if (x[0] < PADDING || x[0] > PADDING + BOARD_SIZE - UNIT_SIZE || y[0] < PADDING || y[0] > PADDING + BOARD_SIZE - UNIT_SIZE) {
                 running = false;
             }
 
@@ -197,27 +237,35 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
                 timer.stop();
                 score = applesEaten;
                 if (listener != null) {
-                    listener.onGameFinished(new Stat("Snake", playerName, score));
+                    listener.onGameFinished(new Stat("Puntaje", playerName, score));
                 }
-                JOptionPane.showMessageDialog(this, "Fin del juego! Puntaje: " + applesEaten);
                 btnReiniciar.setVisible(true);
             }
         }
 
+        private Iterable<Point> snakeSegments() {
+            return () -> new Iterator<Point>() {
+                private int index = 0;
+
+                @Override
+                public boolean hasNext() {
+                    return index < bodyParts;
+                }
+
+                @Override
+                public Point next() {
+                    if (!hasNext()) {
+                        throw new NoSuchElementException();
+                    }
+                    Point current = new Point(x[index], y[index]);
+                    index++;
+                    return current;
+                }
+            };
+        }
+
         private void reiniciarJuego() {
-            bodyParts = 6;
-            applesEaten = 0;
-            direction = 'R';
-            running = true;
-            paused = false;
-            int startX = SCREEN_WIDTH / 2; // O ajusta a una zona más central
-            int startY = SCREEN_HEIGHT / 2;
-            for (int i = 0; i < bodyParts; i++) {
-                x[i] = startX - i * UNIT_SIZE;
-                y[i] = startY;
-            }
-            for (int i = bodyParts; i < x.length; i++) { x[i] = -UNIT_SIZE; y[i] = -UNIT_SIZE; } // segmentos "muertos"
-            newApple();
+            resetState();
             timer.restart();
             repaint();
         }

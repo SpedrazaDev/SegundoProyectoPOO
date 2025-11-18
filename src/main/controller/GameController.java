@@ -7,11 +7,13 @@ import main.view.MainView;
 import main.view.StatsView;
 
 import javax.swing.*;
+import java.beans.PropertyVetoException;
+import java.util.List;
 
-public class GameController implements GameListener {
-    private MainView mainView;
-    private GameRegistry gameRegistry;
-    private StatsManager statsManager;
+public class GameController {
+    private final MainView mainView;
+    private final GameRegistry gameRegistry;
+    private final StatsManager statsManager;
 
     public GameController(MainView mainView) {
         this.mainView = mainView;
@@ -61,5 +63,35 @@ public class GameController implements GameListener {
     public void showStats() {
         StatsView statsView = new StatsView(statsManager);
         mainView.addInternalFrame(statsView);
+    }
+
+    public void listarJuegosCargados() {
+        for (GameFunction game : gameRegistry) {
+            System.out.println(game.getClass().getSimpleName());
+        }
+    }
+
+    private void handleGameFinished(String gameId, Stat stats) {
+        statsManager.addStat(gameId, stats);
+        statsManager.saveStats();
+        JOptionPane.showMessageDialog(
+                mainView,
+                "Juego terminado!\n" + stats.getClave() + ": " + stats.getValor(),
+                "Resultado",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+
+    private class ControllerListener implements GameListener {
+        private final String gameId;
+
+        private ControllerListener(String gameId) {
+            this.gameId = gameId;
+        }
+
+        @Override
+        public void onGameFinished(Stat stats) {
+            handleGameFinished(gameId, stats);
+        }
     }
 }
