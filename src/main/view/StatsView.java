@@ -26,7 +26,7 @@ public class StatsView extends JInternalFrame {
         model.addColumn("Valor");
 
         // Obtener las estadísticas
-        Map<String, List<Stat>> stats = statsManager.getAllStats();
+        Map<String, List<Stat>> stats = this.statsManager.getAllStats();
         for (String juego : stats.keySet()) {
             List<Stat> lista = stats.get(juego);
             for (Stat stat : lista) {

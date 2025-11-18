@@ -31,9 +31,9 @@ public class GameRegistry implements Iterable<GameFunction> {
     }
 
     private void registerBuiltInGames() {
-        registerGame("snake", "Snake", SnakeGame.class);
-        registerGame("simondice", "Simon Dice", SimonGame.class);
-        registerGame("memory", "Memory Game", MemoryGame.class);
+        registerGame("snake", "Snake", SnakeGame.class, false);
+        registerGame("simondice", "Simon Dice", SimonGame.class, false);
+        registerGame("memory", "Memory Game", MemoryGame.class, false);
     }
 
     public synchronized void registerExternalGame(String id, String displayName, GameFunction instance) {
@@ -55,7 +55,13 @@ public class GameRegistry implements Iterable<GameFunction> {
     }
 
     public synchronized void registerGame(String id, String displayName, Class<? extends GameFunction> clazz, boolean external) {
-        registerFactoryInternal(id, displayName, () -> clazz.getDeclaredConstructor().newInstance(), external);
+        registerFactoryInternal(id, displayName, () -> {
+            try {
+                return clazz.getDeclaredConstructor().newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to instantiate game class: " + clazz.getName(), e);
+            }
+        }, external);
     }
 
     public synchronized List<GameInfo> getAvailableGames() {
@@ -90,10 +96,6 @@ public class GameRegistry implements Iterable<GameFunction> {
         if (games.containsKey(id)) {
             throw new IllegalArgumentException("Juego ya registrado: " + id);
         }
-    }
-
-    private static String capitalize(String str) {
-        return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
     @Override
