@@ -45,10 +45,8 @@ public class MenuView extends JInternalFrame {
         btnGame3.addActionListener(e -> controller.loadGame("snake"));
         btnStats.addActionListener(e -> controller.showStats());
 
-        centerPanel.add(btnGame1);
-        centerPanel.add(btnGame2);
-        centerPanel.add(btnGame3);
-        centerPanel.add(btnStats);
+        refreshGames();
+    }
 
     public void refreshGames() {
         gamesPanel.removeAll();
