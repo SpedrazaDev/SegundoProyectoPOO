@@ -38,12 +38,16 @@ public class MainView extends JFrame {
     }
 
     public void addInternalFrame(JInternalFrame frame) {
-        desktopPane.add(frame);
+        if (frame.getParent() == null) {
+            desktopPane.add(frame);
+        }
         frame.setVisible(true);
         try {
+            frame.setIcon(false);
             frame.setSelected(true);
         } catch (java.beans.PropertyVetoException e) {
             e.printStackTrace();
         }
+        frame.toFront();
     }
 }

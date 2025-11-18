@@ -2,6 +2,7 @@ package games.simon;
 
 import gamesplugin.GameFunction;
 import gamesplugin.GameListener;
+import gamesplugin.GameStats;
 import gamesplugin.Stat;
 
 import javax.swing.*;
@@ -175,7 +176,7 @@ public class SimonGame extends JInternalFrame implements GameFunction {
         int score = Math.max(sequence.size() - 1, 0);
         statusLabel.setText("Perdiste! Puntaje: " + score);
         if (listener != null) {
-            listener.onGameFinished(new Stat("Rondas", playerName, score));
+            listener.onGameFinished(new GameStats("Rondas", playerName, score));
         }
     }
 

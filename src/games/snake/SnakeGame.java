@@ -2,6 +2,7 @@ package games.snake;
 
 import gamesplugin.GameFunction;
 import gamesplugin.GameListener;
+import gamesplugin.GameStats;
 import gamesplugin.Stat;
 import javax.swing.*;
 import java.awt.*;
@@ -237,7 +238,7 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
                 timer.stop();
                 score = applesEaten;
                 if (listener != null) {
-                    listener.onGameFinished(new Stat("Puntaje", playerName, score));
+                    listener.onGameFinished(new GameStats("Puntaje", playerName, score));
                 }
                 btnReiniciar.setVisible(true);
             }

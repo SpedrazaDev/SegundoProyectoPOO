@@ -7,6 +7,8 @@ import main.view.MainView;
 import main.view.StatsView;
 
 import javax.swing.*;
+import java.beans.PropertyVetoException;
+import java.io.File;
 import java.util.List;
 
 public class GameController {
@@ -27,6 +29,12 @@ public class GameController {
 
             // Crear internal frame para el juego
             JInternalFrame gameFrame = (JInternalFrame) game;
+            if (gameFrame.isClosed()) {
+                try {
+                    gameFrame.setClosed(false);
+                } catch (PropertyVetoException ignored) {
+                }
+            }
             mainView.addInternalFrame(gameFrame);
 
             game.iniciar();
@@ -48,7 +56,11 @@ public class GameController {
         return gameRegistry.getAvailableGames();
     }
 
-    private void handleGameFinished(String gameId, Stat stats) {
+    public List<GameRegistry.GameInfo> loadExternalGamesFromJar(File jarFile) throws Exception {
+        return gameRegistry.loadGamesFromJar(jarFile);
+    }
+
+    private void handleGameFinished(String gameId, GameStats stats) {
         statsManager.addStat(gameId, stats);
         statsManager.saveStats();
         JOptionPane.showMessageDialog(
@@ -67,7 +79,7 @@ public class GameController {
         }
 
         @Override
-        public void onGameFinished(Stat stats) {
+        public void onGameFinished(GameStats stats) {
             handleGameFinished(gameId, stats);
         }
     }

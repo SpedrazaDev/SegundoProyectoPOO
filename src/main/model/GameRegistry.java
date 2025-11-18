@@ -4,13 +4,22 @@ import games.memory.MemoryGame;
 import games.simon.SimonGame;
 import games.snake.SnakeGame;
 import gamesplugin.GameFunction;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.function.Supplier;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import javax.swing.JInternalFrame;
 
 public class GameRegistry implements Iterable<GameFunction> {
     private static GameRegistry instance;
@@ -36,6 +45,55 @@ public class GameRegistry implements Iterable<GameFunction> {
         registerGame("memory", "Memory Game", MemoryGame.class, false);
     }
 
+    public synchronized List<GameInfo> loadGamesFromJar(File jarFile) throws Exception {
+        if (jarFile == null || !jarFile.isFile()) {
+            throw new IllegalArgumentException("Archivo JAR inv\u00E1lido");
+        }
+        List<GameInfo> addedGames = new ArrayList<>();
+        URL jarUrl = jarFile.toURI().toURL();
+        URLClassLoader loader = new URLClassLoader(new URL[]{jarUrl}, GameFunction.class.getClassLoader());
+        try (JarFile jar = new JarFile(jarFile)) {
+            Enumeration<JarEntry> entries = jar.entries();
+            while (entries.hasMoreElements()) {
+                JarEntry entry = entries.nextElement();
+                if (!isClassEntry(entry)) {
+                    continue;
+                }
+                String className = entry.getName()
+                        .replace('/', '.')
+                        .replace(".class", "");
+                try {
+                    Class<?> rawClass = Class.forName(className, true, loader);
+                    if (!GameFunction.class.isAssignableFrom(rawClass)) {
+                        continue;
+                    }
+                    if (!JInternalFrame.class.isAssignableFrom(rawClass)) {
+                        continue;
+                    }
+                    Class<? extends GameFunction> gameClass = rawClass.asSubclass(GameFunction.class);
+                    if (Modifier.isAbstract(gameClass.getModifiers())) {
+                        continue;
+                    }
+                    gameClass.getDeclaredConstructor();
+
+                    String uniqueId = buildAvailableId(gameClass.getSimpleName());
+                    String displayName = buildDisplayName(gameClass.getSimpleName());
+                    registerGame(uniqueId, displayName, gameClass, true);
+                    addedGames.add(new GameInfo(uniqueId, displayName, true));
+                } catch (ClassNotFoundException | NoClassDefFoundError |
+                         NoSuchMethodException | IllegalArgumentException ignored) {
+                    // Ignoramos clases que no cumplen con los requisitos
+                }
+            }
+        } catch (IOException e) {
+            throw new Exception("No se pudo leer el archivo JAR: " + jarFile.getName(), e);
+        }
+        if (addedGames.isEmpty()) {
+            throw new Exception("No se encontraron juegos compatibles en el archivo seleccionado.");
+        }
+        return addedGames;
+    }
+
     public synchronized void registerExternalGame(String id, String displayName, GameFunction instance) {
         registerInstanceInternal(id, displayName, instance, true);
     }
@@ -43,7 +101,9 @@ public class GameRegistry implements Iterable<GameFunction> {
     private void registerInstanceInternal(String id, String displayName, GameFunction instance, boolean external) {
         String normalizedId = normalize(id);
         ensureNotRegistered(normalizedId);
-        games.put(normalizedId, new GameEntry(normalizedId, displayName, () -> instance, external));
+        GameEntry entry = new GameEntry(normalizedId, displayName, () -> instance, external);
+        entry.setInitialInstance(instance);
+        games.put(normalizedId, entry);
         cachedInfos.clear();
     }
 
@@ -79,7 +139,7 @@ public class GameRegistry implements Iterable<GameFunction> {
             throw new IllegalArgumentException("Juego no registrado: " + id);
         }
         try {
-            return entry.supplier.get();
+            return entry.getOrCreateInstance();
         } catch (Exception e) {
             throw new Exception("No se pudo cargar el juego: " + id, e);
         }
@@ -87,9 +147,43 @@ public class GameRegistry implements Iterable<GameFunction> {
 
     private String normalize(String id) {
         if (id == null || id.trim().isEmpty()) {
-            throw new IllegalArgumentException("El identificador no puede estar vacío");
+            throw new IllegalArgumentException("El identificador no puede estar vac\u00EDo");
         }
         return id.trim().toLowerCase();
+    }
+
+    private boolean isClassEntry(JarEntry entry) {
+        return entry != null
+                && !entry.isDirectory()
+                && entry.getName().endsWith(".class")
+                && !entry.getName().contains("$");
+    }
+
+    private String buildDisplayName(String simpleName) {
+        if (simpleName == null || simpleName.isEmpty()) {
+            return "Juego Externo";
+        }
+        StringBuilder builder = new StringBuilder();
+        char[] chars = simpleName.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            char current = chars[i];
+            if (i > 0 && Character.isUpperCase(current) && Character.isLowerCase(chars[i - 1])) {
+                builder.append(' ');
+            }
+            builder.append(current);
+        }
+        return builder.toString().trim();
+    }
+
+    private String buildAvailableId(String preferredId) {
+        String normalized = normalize(preferredId);
+        String candidate = normalized;
+        int suffix = 2;
+        while (games.containsKey(candidate)) {
+            candidate = normalized + suffix;
+            suffix++;
+        }
+        return candidate;
     }
 
     private void ensureNotRegistered(String id) {
@@ -111,8 +205,32 @@ public class GameRegistry implements Iterable<GameFunction> {
         return instances.iterator();
     }
 
-    private record GameEntry(String id, String displayName,
-                             Supplier<GameFunction> supplier, boolean external) {}
+    private static final class GameEntry {
+        private final String id;
+        private final String displayName;
+        private final Supplier<GameFunction> supplier;
+        private final boolean external;
+        private GameFunction instance;
+
+        private GameEntry(String id, String displayName,
+                          Supplier<GameFunction> supplier, boolean external) {
+            this.id = id;
+            this.displayName = displayName;
+            this.supplier = supplier;
+            this.external = external;
+        }
+
+        private synchronized GameFunction getOrCreateInstance() {
+            if (instance == null) {
+                instance = supplier.get();
+            }
+            return instance;
+        }
+
+        private synchronized void setInitialInstance(GameFunction instance) {
+            this.instance = instance;
+        }
+    }
 
     public record GameInfo(String id, String displayName, boolean external) {}
 

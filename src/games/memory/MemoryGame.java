@@ -2,6 +2,7 @@ package games.memory;
 
 import gamesplugin.GameFunction;
 import gamesplugin.GameListener;
+import gamesplugin.GameStats;
 import gamesplugin.Stat;
 
 import javax.swing.*;
@@ -190,7 +191,7 @@ public class MemoryGame extends JInternalFrame implements GameFunction {
 
         private void finishGame() {
             if (listener != null) {
-                listener.onGameFinished(new Stat("Intentos", playerName, attempts));
+                listener.onGameFinished(new GameStats("Intentos", playerName, attempts));
             }
             gameRunning = false;
             startButton.setEnabled(true);

@@ -4,8 +4,11 @@ import main.controller.GameController;
 import main.model.GameRegistry;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.io.File;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MenuView extends JInternalFrame {
     private final GameController controller;
@@ -33,11 +36,15 @@ public class MenuView extends JInternalFrame {
         JScrollPane scrollPane = new JScrollPane(gamesPanel);
         add(scrollPane, BorderLayout.CENTER);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        JButton btnStats = new JButton("Ver Estadísticas");
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 5));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        JButton btnLoadJar = new JButton("Cargar Juego");
+        JButton btnStats = new JButton("Ver Estad\u00EDsticas");
+        buttonPanel.add(btnLoadJar);
         buttonPanel.add(btnStats);
         add(buttonPanel, BorderLayout.SOUTH);
 
+        btnLoadJar.addActionListener(e -> handleLoadExternalJar());
         btnStats.addActionListener(e -> controller.showStats());
 
         refreshGames();
@@ -63,5 +70,37 @@ public class MenuView extends JInternalFrame {
         }
         gamesPanel.revalidate();
         gamesPanel.repaint();
+    }
+
+    private void handleLoadExternalJar() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Selecciona un archivo JAR");
+        chooser.setFileFilter(new FileNameExtensionFilter("Archivos JAR", "jar"));
+        int result = chooser.showOpenDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        File selectedFile = chooser.getSelectedFile();
+        try {
+            List<GameRegistry.GameInfo> added = controller.loadExternalGamesFromJar(selectedFile);
+            refreshGames();
+            String nombres = added.stream()
+                    .map(GameRegistry.GameInfo::displayName)
+                    .collect(Collectors.joining(", "));
+            String message = "Juego(s) agregado(s): " + nombres;
+            JOptionPane.showMessageDialog(
+                    this,
+                    message,
+                    "Carga exitosa",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No se pudo cargar el JAR seleccionado.\n" + ex.getMessage(),
+                    "Error al cargar juego",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
     }
 }
