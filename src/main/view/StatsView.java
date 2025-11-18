@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 public class StatsView extends JInternalFrame {
-    private StatsManager statsManager;
+    private final StatsManager statsManager;
 
     public StatsView(StatsManager statsManager) {
         super("Estadísticas", true, true, true, true);
@@ -19,18 +19,18 @@ public class StatsView extends JInternalFrame {
         setLocation(150, 100);
         setLayout(new BorderLayout());
 
-        // Crear el modelo de tabla
         DefaultTableModel model = new DefaultTableModel();
         model.addColumn("Juego");
+        model.addColumn("Clave");
         model.addColumn("Nombre");
         model.addColumn("Valor");
 
-        // Obtener las estadísticas
-        Map<String, List<Stat>> stats = this.statsManager.getAllStats();
-        for (String juego : stats.keySet()) {
-            List<Stat> lista = stats.get(juego);
-            for (Stat stat : lista) {
+        Map<String, List<Stat>> stats = statsManager.getAllStats();
+        for (Map.Entry<String, List<Stat>> entry : stats.entrySet()) {
+            String gameId = entry.getKey();
+            for (Stat stat : entry.getValue()) {
                 model.addRow(new Object[] {
+                        gameId,
                         stat.getClave(),
                         stat.getNombre(),
                         stat.getValor()

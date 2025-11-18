@@ -49,7 +49,7 @@ public class GameController {
     }
 
     private void handleGameFinished(String gameId, Stat stats) {
-        statsManager.addStat(stats);
+        statsManager.addStat(gameId, stats);
         statsManager.saveStats();
         JOptionPane.showMessageDialog(
                 mainView,

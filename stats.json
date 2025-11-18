@@ -1,3 +1,11 @@
-Rondas;Jugador;2
-Puntaje;Jugador;3
-Puntaje;Jugador;1
+{
+  "memory": [
+    {"clave":"Intentos","nombre":"Jason","valor":14}
+  ],
+  "snake": [
+    {"clave":"Puntaje","nombre":"Santiago","valor":3}
+  ],
+  "simondice": [
+    {"clave":"Rondas","nombre":"Jugador","valor":4}
+  ]
+}
