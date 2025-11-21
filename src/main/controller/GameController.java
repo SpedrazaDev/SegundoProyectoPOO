@@ -28,16 +28,19 @@ public class GameController {
             game.setGameListener(new ControllerListener(gameName));
 
             // Crear internal frame para el juego
-            JInternalFrame gameFrame = (JInternalFrame) game;
-            if (gameFrame.isClosed()) {
-                try {
-                    gameFrame.setClosed(false);
-                } catch (PropertyVetoException ignored) {
-                }
+            JInternalFrame gameFrame = game.iniciar();
+            if (gameFrame == null && game instanceof JInternalFrame jf) {
+                gameFrame = jf;
             }
-            mainView.addInternalFrame(gameFrame);
-
-            game.iniciar();
+            if (gameFrame != null) {
+                if (gameFrame.isClosed()) {
+                    try {
+                        gameFrame.setClosed(false);
+                    } catch (PropertyVetoException ignored) {
+                    }
+                }
+                mainView.addInternalFrame(gameFrame);
+            }
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(mainView,

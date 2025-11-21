@@ -31,7 +31,7 @@ public class MemoryGame extends JInternalFrame implements GameFunction {
     }
 
     @Override
-    public void iniciar() {
+    public JInternalFrame iniciar() {
         String nombre = JOptionPane.showInputDialog(this, "Nombre del jugador:", playerName);
         if (nombre != null && !nombre.trim().isEmpty()) {
             playerName = nombre.trim();
@@ -42,6 +42,7 @@ public class MemoryGame extends JInternalFrame implements GameFunction {
         pack();
         setVisible(true);
         memoryPanel.startRound();
+        return this;
     }
 
     @Override

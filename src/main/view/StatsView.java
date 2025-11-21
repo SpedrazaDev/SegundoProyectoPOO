@@ -6,6 +6,7 @@ import gamesplugin.Stat;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +29,11 @@ public class StatsView extends JInternalFrame {
         Map<String, List<Stat>> stats = this.statsManager.getAllStats();
         for (Map.Entry<String, List<Stat>> entry : stats.entrySet()) {
             String gameId = entry.getKey();
-            for (Stat stat : entry.getValue()) {
+            List<Stat> top = new ArrayList<>(entry.getValue());
+            top.sort((a, b) -> Integer.compare(b.getValor(), a.getValor()));
+            int limit = Math.min(3, top.size());
+            for (int i = 0; i < limit; i++) {
+                Stat stat = top.get(i);
                 model.addRow(new Object[] {
                         gameId,
                         stat.getClave(),

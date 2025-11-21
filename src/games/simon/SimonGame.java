@@ -197,7 +197,7 @@ public class SimonGame extends JInternalFrame implements GameFunction {
     }
 
     @Override
-    public void iniciar() {
+    public JInternalFrame iniciar() {
         String nombre = JOptionPane.showInputDialog(this, "Nombre del jugador:", playerName);
         if (nombre != null && !nombre.trim().isEmpty()) {
             playerName = nombre.trim();
@@ -211,6 +211,7 @@ public class SimonGame extends JInternalFrame implements GameFunction {
         );
         setVisible(true);
         reiniciarJuego();
+        return this;
     }
 
     @Override

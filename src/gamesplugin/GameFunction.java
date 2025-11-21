@@ -1,7 +1,9 @@
 package gamesplugin;
 
+import javax.swing.JInternalFrame;
+
 public interface GameFunction {
-    public void iniciar();
+    public JInternalFrame iniciar();
     public Stat getStats();
     void setGameListener(GameListener listener);
 }

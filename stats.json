@@ -1,11 +1,23 @@
 {
   "memory": [
-    {"clave":"Intentos","nombre":"Jason","valor":14}
+    {"clave":"Intentos","nombre":"Jugador1","valor":15},
+    {"clave":"Intentos","nombre":"Jugador2","valor":18},
+    {"clave":"Intentos","nombre":"Jugador3","valor":13},
+    {"clave":"Intentos","nombre":"Jugador4","valor":14},
+    {"clave":"Intentos","nombre":"Jugador5","valor":16}
   ],
   "snake": [
-    {"clave":"Puntaje","nombre":"Santiago","valor":3}
+    {"clave":"Puntaje","nombre":"Jugador1","valor":12},
+    {"clave":"Puntaje","nombre":"Jugador2","valor":3},
+    {"clave":"Puntaje","nombre":"Jugador3","valor":20},
+    {"clave":"Puntaje","nombre":"Jugador4","valor":7},
+    {"clave":"Puntaje","nombre":"Jugador5","valor":15}
   ],
   "simondice": [
-    {"clave":"Rondas","nombre":"Jugador","valor":4}
+    {"clave":"Rondas","nombre":"Jugador1","valor":4},
+    {"clave":"Rondas","nombre":"Jugador2","valor":6},
+    {"clave":"Rondas","nombre":"Jugador3","valor":2},
+    {"clave":"Rondas","nombre":"Jugador4","valor":9},
+    {"clave":"Rondas","nombre":"Jugador5","valor":5}
   ]
 }

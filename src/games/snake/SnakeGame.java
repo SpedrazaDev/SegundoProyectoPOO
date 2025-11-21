@@ -24,7 +24,7 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
     }
 
     @Override
-    public void iniciar() {
+    public JInternalFrame iniciar() {
         String respuesta = JOptionPane.showInputDialog(this, "Nombre del jugador:", playerName);
         if (respuesta != null && !respuesta.trim().isEmpty()) {
             playerName = respuesta.trim();
@@ -35,6 +35,7 @@ public class SnakeGame extends JInternalFrame implements GameFunction {
         pack();
         setVisible(true);
         panel.requestFocusInWindow();
+        return this;
     }
 
     @Override
