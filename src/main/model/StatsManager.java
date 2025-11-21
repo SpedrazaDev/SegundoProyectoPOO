@@ -26,11 +26,25 @@ public class StatsManager {
         String key = normalizeGameId(gameId);
         allStats.putIfAbsent(key, new ArrayList<>());
         List<Stat> statsList = allStats.get(key);
-        statsList.add(stat);
-        statsList.sort((s1, s2) -> Integer.compare(s2.getValor(), s1.getValor()));
-        if (statsList.size() > 3) {
-            statsList.remove(3);
+        String playerName = stat.getNombre() == null ? "" : stat.getNombre().trim();
+        Stat existing = null;
+        for (Stat s : statsList) {
+            String currentName = s.getNombre() == null ? "" : s.getNombre().trim();
+            if (currentName.equalsIgnoreCase(playerName)) {
+                existing = s;
+                break;
+            }
         }
+
+        if (existing != null) {
+            if (stat.getValor() > existing.getValor()) {
+                existing.setValor(stat.getValor());
+                existing.setClave(stat.getClave());
+            }
+        } else {
+            statsList.add(stat);
+        }
+        sortAndTrim(key, statsList);
     }
 
     public Map<String, List<Stat>> getAllStats() {
@@ -132,11 +146,8 @@ public class StatsManager {
                             .add(new Stat(clave, nombre, valor));
                 }
             }
-            for (List<Stat> stats : loaded.values()) {
-                stats.sort((s1, s2) -> Integer.compare(s2.getValor(), s1.getValor()));
-                if (stats.size() > 3) {
-                    stats.subList(3, stats.size()).clear();
-                }
+            for (Map.Entry<String, List<Stat>> entry : loaded.entrySet()) {
+                sortAndTrim(entry.getKey(), entry.getValue());
             }
             allStats = loaded;
         } catch (IOException e) {
@@ -157,5 +168,20 @@ public class StatsManager {
 
     private String unescape(String value) {
         return value.replace("\\\"", "\"").replace("\\\\", "\\");
+    }
+
+    private void sortAndTrim(String gameId, List<Stat> statsList) {
+        Comparator<Stat> comparator = comparatorFor(gameId);
+        statsList.sort(comparator);
+        if (statsList.size() > 3) {
+            statsList.subList(3, statsList.size()).clear();
+        }
+    }
+
+    private Comparator<Stat> comparatorFor(String gameId) {
+        boolean ascending = normalizeGameId(gameId).equals("memory");
+        return ascending
+                ? Comparator.comparingInt(Stat::getValor)
+                : (a, b) -> Integer.compare(b.getValor(), a.getValor());
     }
 }

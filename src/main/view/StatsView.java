@@ -30,7 +30,12 @@ public class StatsView extends JInternalFrame {
         for (Map.Entry<String, List<Stat>> entry : stats.entrySet()) {
             String gameId = entry.getKey();
             List<Stat> top = new ArrayList<>(entry.getValue());
-            top.sort((a, b) -> Integer.compare(b.getValor(), a.getValor()));
+            boolean ascending = gameId != null && gameId.trim().equalsIgnoreCase("memory");
+            if (ascending) {
+                top.sort((a, b) -> Integer.compare(a.getValor(), b.getValor()));
+            } else {
+                top.sort((a, b) -> Integer.compare(b.getValor(), a.getValor()));
+            }
             int limit = Math.min(3, top.size());
             for (int i = 0; i < limit; i++) {
                 Stat stat = top.get(i);
