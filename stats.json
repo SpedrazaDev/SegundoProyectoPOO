@@ -1,7 +1,7 @@
 {
   "memory": [
     {"clave":"Intentos","nombre":"Ana","valor":18},
-    {"clave":"Intentos","nombre":"Sofía","valor":16},
+    {"clave":"Intentos","nombre":"Sofia","valor":16},
     {"clave":"Intentos","nombre":"Santiago","valor":15}
   ],
   "snake": [
@@ -12,6 +12,6 @@
   "simondice": [
     {"clave":"Rondas","nombre":"Luis","valor":9},
     {"clave":"Rondas","nombre":"Carlos","valor":6},
-    {"clave":"Rondas","nombre":"María","valor":5}
+    {"clave":"Rondas","nombre":"Maria","valor":5}
   ]
 }
