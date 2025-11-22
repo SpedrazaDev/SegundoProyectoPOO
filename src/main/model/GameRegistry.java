@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.function.Supplier;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import javax.swing.JInternalFrame;
+import java.util.jar.Manifest;
 
 public class GameRegistry implements Iterable<GameFunction> {
     private static GameRegistry instance;
@@ -53,6 +53,22 @@ public class GameRegistry implements Iterable<GameFunction> {
         URL jarUrl = jarFile.toURI().toURL();
         URLClassLoader loader = new URLClassLoader(new URL[]{jarUrl}, GameFunction.class.getClassLoader());
         try (JarFile jar = new JarFile(jarFile)) {
+            Manifest manifest = jar.getManifest();
+            if (manifest != null) {
+                String mainClass = manifest.getMainAttributes().getValue("Main-Class");
+                if (mainClass != null && !mainClass.isBlank()) {
+                    try {
+                        Class<?> rawMain = Class.forName(mainClass.trim(), true, loader);
+                        GameInfo info = tryRegisterLoadedClass(rawMain);
+                        if (info != null) {
+                            addedGames.add(info);
+                        }
+                    } catch (UnsupportedClassVersionError e) {
+                        throw new Exception("El JAR fue compilado con una versi\u00F3n de Java m\u00E1s reciente.", e);
+                    }
+                }
+            }
+
             Enumeration<JarEntry> entries = jar.entries();
             while (entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
@@ -64,25 +80,15 @@ public class GameRegistry implements Iterable<GameFunction> {
                         .replace(".class", "");
                 try {
                     Class<?> rawClass = Class.forName(className, true, loader);
-                    if (!GameFunction.class.isAssignableFrom(rawClass)) {
-                        continue;
+                    GameInfo info = tryRegisterLoadedClass(rawClass);
+                    if (info != null) {
+                        addedGames.add(info);
                     }
-                    if (!JInternalFrame.class.isAssignableFrom(rawClass)) {
-                        continue;
-                    }
-                    Class<? extends GameFunction> gameClass = rawClass.asSubclass(GameFunction.class);
-                    if (Modifier.isAbstract(gameClass.getModifiers())) {
-                        continue;
-                    }
-                    gameClass.getDeclaredConstructor();
-
-                    String uniqueId = buildAvailableId(gameClass.getSimpleName());
-                    String displayName = buildDisplayName(gameClass.getSimpleName());
-                    registerGame(uniqueId, displayName, gameClass, true);
-                    addedGames.add(new GameInfo(uniqueId, displayName, true));
                 } catch (ClassNotFoundException | NoClassDefFoundError |
                          NoSuchMethodException | IllegalArgumentException ignored) {
                     // Ignoramos clases que no cumplen con los requisitos
+                } catch (UnsupportedClassVersionError e) {
+                    throw new Exception("El JAR fue compilado con una versi\u00F3n de Java m\u00E1s reciente.", e);
                 }
             }
         } catch (IOException e) {
@@ -157,6 +163,38 @@ public class GameRegistry implements Iterable<GameFunction> {
                 && !entry.isDirectory()
                 && entry.getName().endsWith(".class")
                 && !entry.getName().contains("$");
+    }
+
+    private GameInfo tryRegisterLoadedClass(Class<?> rawClass) throws Exception {
+        if (rawClass == null) {
+            return null;
+        }
+        if (!GameFunction.class.isAssignableFrom(rawClass)) {
+            return null;
+        }
+        Class<? extends GameFunction> gameClass = rawClass.asSubclass(GameFunction.class);
+        if (Modifier.isAbstract(gameClass.getModifiers())) {
+            return null;
+        }
+
+        GameFunction instance = instantiateGame(gameClass);
+        String uniqueId = buildAvailableId(gameClass.getSimpleName());
+        String displayName = buildDisplayName(gameClass.getSimpleName());
+        registerInstanceInternal(uniqueId, displayName, instance, true);
+        return new GameInfo(uniqueId, displayName, true);
+    }
+
+    private GameFunction instantiateGame(Class<? extends GameFunction> gameClass) throws Exception {
+        try {
+            var getInstance = gameClass.getMethod("getInstance");
+            if (Modifier.isStatic(getInstance.getModifiers())
+                    && GameFunction.class.isAssignableFrom(getInstance.getReturnType())) {
+                return (GameFunction) getInstance.invoke(null);
+            }
+        } catch (NoSuchMethodException ignored) {
+            // Sin singleton, seguimos con el constructor.
+        }
+        return gameClass.getDeclaredConstructor().newInstance();
     }
 
     private String buildDisplayName(String simpleName) {
