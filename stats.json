@@ -1,8 +1,13 @@
 {
   "memory": [
-    {"clave":"Intentos","nombre":"Ana","valor":18},
+    {"clave":"Intentos","nombre":"Santiago","valor":15},
     {"clave":"Intentos","nombre":"Sofia","valor":16},
-    {"clave":"Intentos","nombre":"Santiago","valor":15}
+    {"clave":"Intentos","nombre":"Ana","valor":18}
+  ],
+  "juegosnake": [
+    {"clave":"Snake","nombre":"Omar","valor":80},
+    {"clave":"Snake","nombre":"Jason","valor":50},
+    {"clave":"Snake","nombre":"Andrea","valor":40}
   ],
   "snake": [
     {"clave":"Puntaje","nombre":"Jason","valor":22},
